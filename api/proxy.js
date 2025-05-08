@@ -1,19 +1,23 @@
 const { createProxyMiddleware } = require("http-proxy-middleware");
-const url = require("url");
 
 module.exports = (req, res) => {
-  const parsedUrl = url.parse(req.url, true);
-  const target = parsedUrl.query.url;
+  let target = "https://www.google.com/"; //your website url
+  //   if (
+  //     req.url.startsWith("/api") ||
+  //     req.url.startsWith("/auth") ||
+  //     req.url.startsWith("/banner") ||
+  //     req.url.startsWith("/CollegeTask")
+  //   ) {
+  //     target = "http://106.15.2.32:6969";
+  //   }
 
-  if (!target || !/^https?:\/\/[^ "]+$/.test(target)) {
-    res.statusCode = 400;
-    res.end("Invalid or missing 'url' query parameter.");
-    return;
-  }
-
-  return createProxyMiddleware({
+  createProxyMiddleware({
     target,
     changeOrigin: true,
-    pathRewrite: () => "/", // optional: rewrites the path to root
+    pathRewrite: {
+      // rewrite request path `/backend`
+      //  /backend/user/login => http://google.com/user/login
+      //   "^/backend/": "/",
+    },
   })(req, res);
 };
