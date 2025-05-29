@@ -1,23 +1,60 @@
 const { createProxyMiddleware } = require("http-proxy-middleware");
 
 module.exports = (req, res) => {
-  let target = "https://www.google.com/"; //your website url
-  //   if (
-  //     req.url.startsWith("/api") ||
-  //     req.url.startsWith("/auth") ||
-  //     req.url.startsWith("/banner") ||
-  //     req.url.startsWith("/CollegeTask")
-  //   ) {
-  //     target = "http://106.15.2.32:6969";
-  //   }
+  const { target } = req.query;
+
+  if (!target) {
+    res.setHeader("Content-Type", "text/html");
+    res.end(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Enter Proxy URL</title>
+        <style>
+          body {
+            font-family: sans-serif;
+            background: #111;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+          }
+          input, button {
+            padding: 10px;
+            font-size: 16px;
+            margin-top: 10px;
+          }
+        </style>
+      </head>
+      <body>
+        <h2>Enter a URL to proxy:</h2>
+        <input id="urlInput" type="text" placeholder="https://example.com" />
+        <button onclick="startProxy()">Go</button>
+
+        <script>
+          function startProxy() {
+            const url = document.getElementById("urlInput").value;
+            if (!url.startsWith("http")) {
+              alert("Please enter a valid URL with http or https.");
+              return;
+            }
+            window.location.href = "?target=" + encodeURIComponent(url);
+          }
+        </script>
+      </body>
+      </html>
+    `);
+    return;
+  }
 
   createProxyMiddleware({
     target,
     changeOrigin: true,
-    pathRewrite: {
-      // rewrite request path `/backend`
-      //  /backend/user/login => http://google.com/user/login
-      //   "^/backend/": "/",
+    pathRewrite: (path, req) => {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      return url.pathname;
     },
   })(req, res);
 };
