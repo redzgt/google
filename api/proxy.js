@@ -1,60 +1,68 @@
 const { createProxyMiddleware } = require("http-proxy-middleware");
 
 module.exports = (req, res) => {
-  const { target } = req.query;
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const target = url.searchParams.get("target");
 
   if (!target) {
+    // No target provided, show form
     res.setHeader("Content-Type", "text/html");
     res.end(`
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Enter Proxy URL</title>
+        <title>Proxy Browser</title>
         <style>
           body {
-            font-family: sans-serif;
             background: #111;
             color: white;
+            font-family: sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
           }
-          input, button {
+          input {
             padding: 10px;
+            width: 300px;
+            font-size: 16px;
+          }
+          button {
+            padding: 10px 20px;
             font-size: 16px;
             margin-top: 10px;
           }
         </style>
       </head>
       <body>
-        <h2>Enter a URL to proxy:</h2>
-        <input id="urlInput" type="text" placeholder="https://example.com" />
-        <button onclick="startProxy()">Go</button>
-
-        <script>
-          function startProxy() {
-            const url = document.getElementById("urlInput").value;
-            if (!url.startsWith("http")) {
-              alert("Please enter a valid URL with http or https.");
-              return;
-            }
-            window.location.href = "?target=" + encodeURIComponent(url);
-          }
-        </script>
+        <h2>Enter a URL to browse privately:</h2>
+        <form method="GET">
+          <input name="target" type="text" placeholder="https://example.com" required />
+          <br />
+          <button type="submit">Browse</button>
+        </form>
       </body>
       </html>
     `);
     return;
   }
 
+  // Remove ?target=... from path before proxying
+  const originalUrl = new URL(req.url, `http://${req.headers.host}`);
+  originalUrl.searchParams.delete("target");
+  req.url = originalUrl.pathname + (originalUrl.searchParams.toString() ? `?${originalUrl.searchParams}` : "");
+
   createProxyMiddleware({
     target,
     changeOrigin: true,
-    pathRewrite: (path, req) => {
-      const url = new URL(req.url, `http://${req.headers.host}`);
-      return url.pathname;
+    pathRewrite: (path, req) => req.url, // preserve path
+    onProxyReq: (proxyReq, req) => {
+      // optional: cleanup or add headers
+    },
+    onError(err, req, res) {
+      res.writeHead(500, { "Content-Type": "text/plain" });
+      res.end("Proxy error: " + err.message);
     },
   })(req, res);
 };
