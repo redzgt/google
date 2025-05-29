@@ -48,7 +48,7 @@ module.exports = (req, res) => {
             font-size: 16px;
             border: none;
             border-radius: 8px;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             outline: none;
             background-color: #1e1e1e;
             color: white;
@@ -63,10 +63,17 @@ module.exports = (req, res) => {
             color: white;
             cursor: pointer;
             transition: background-color 0.2s;
+            margin-top: 8px;
           }
 
           button:hover {
             background-color: #444;
+          }
+
+          .notice {
+            font-size: 12px;
+            color: #888;
+            margin-top: 10px;
           }
         </style>
       </head>
@@ -76,6 +83,7 @@ module.exports = (req, res) => {
           <input id="urlInput" type="text" placeholder="https://example.com" />
           <br />
           <button onclick="go()">Go</button>
+          <div class="notice">Notice: Does not work on Google products.</div>
         </div>
 
         <script>
